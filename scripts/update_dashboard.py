@@ -48,6 +48,17 @@ def collect():
     }
 
 
+def contributions():
+    query = '{ user(login: "' + USER + '") { contributionsCollection { contributionCalendar { totalContributions weeks { contributionDays { date weekday contributionCount contributionLevel } } } } } }'
+    headers = {"Authorization": "Bearer " + os.environ["GH_TOKEN"], "Content-Type": "application/json", "User-Agent": "profile-dashboard"}
+    request = Request("https://api.github.com/graphql", data=json.dumps({"query": query}).encode(), headers=headers)
+    with urlopen(request, timeout=30) as response:
+        result = json.load(response)
+    if result.get("errors"):
+        raise RuntimeError("GitHub could not return contribution data")
+    return result["data"]["user"]["contributionsCollection"]["contributionCalendar"]
+
+
 def text(x, y, value, size=20, color="#e6edf3", weight=400, anchor="start"):
     return f'<text x="{x}" y="{y}" font-size="{size}" fill="{color}" font-weight="{weight}" text-anchor="{anchor}">{escape(str(value))}</text>'
 
@@ -80,55 +91,80 @@ def language_values(data):
 def languages_card(data, x, y, width):
     values = language_values(data)
     total = sum(value for _, value in values)
-    top_percent = f"{values[0][1]/total:.0%}" if total else "—"
-    p = [panel(x,y,width,402), text(x+25,y+36,"LENGUAJES",16,"#8b949e",600)]
-    p += [donut(x+width/2,y+154,76,values,top_percent,values[0][0] if values else "Sin código")]
+    p = [panel(x,y,width,280),text(x+24,y+34,"LENGUAJES",16,"#8b949e",600)]
+    p += [donut(x+116,y+146,70,values,f"{values[0][1]/total:.0%}" if total else "—",values[0][0] if values else "Sin código")]
     for i,(name,value) in enumerate(values):
-        lx = x+25+(i%2)*(width/2-8)
-        ly = y+277+(i//2)*32
-        p += [f'<circle cx="{lx+4}" cy="{ly-5}" r="4" fill="{COLORS[i]}"/>',text(lx+16,ly,f"{name} {value/total:.1%}",15)]
-    p += [text(x+25,y+378,"Por bytes · sin forks ni perfil",13,"#8b949e")]
+        ly=y+76+i*29
+        p += [f'<circle cx="{x+227}" cy="{ly-5}" r="4" fill="{COLORS[i]}"/>',text(x+240,ly,f"{name} {value/total:.1%}",17)]
+    p += [text(x+24,y+260,"Por bytes · sin forks ni perfil",14,"#8b949e")]
     return "".join(p)
 
 
 def repos_card(data,x,y,width):
     values=[("Originales",data["original_repos"]),("Forks",data["forked_repos"])]
-    p=[panel(x,y,width,402),text(x+25,y+36,"REPOSITORIOS",16,"#8b949e",600),donut(x+width/2,y+154,76,values,data["public_repos"],"públicos")]
+    p=[panel(x,y,width,280),text(x+24,y+34,"REPOSITORIOS",16,"#8b949e",600),donut(x+116,y+146,70,values,data["public_repos"],"públicos")]
     for i,(name,value) in enumerate(values):
-        ly=y+281+i*35
-        p += [f'<circle cx="{x+29}" cy="{ly-5}" r="5" fill="{COLORS[i]}"/>',text(x+45,ly,name,18),text(x+width-28,ly,value,20,weight=700,anchor="end")]
-    p += [text(x+25,y+378,"Incluye este repositorio de perfil",13,"#8b949e")]
+        ly=y+125+i*43
+        p += [f'<circle cx="{x+227}" cy="{ly-5}" r="5" fill="{COLORS[i]}"/>',text(x+240,ly,f"{name}  {value}",20)]
+    p += [text(x+24,y+260,"Incluye el repositorio de perfil",14,"#8b949e")]
     return "".join(p)
 
 
-def counters(data,x,y,width):
-    p=[panel(x,y,width,198),text(x+25,y+37,"EN NÚMEROS",16,"#8b949e",600)]
-    columns=[("stars","Estrellas"),("forks","Forks recibidos"),("followers","Seguidores"),("following","Siguiendo")]
-    for i,(key,label) in enumerate(columns):
-        cx=x+width*(i+.5)/4
-        p += [text(cx,y+98,data[key],39,"#58a6ff",700,"middle"),text(cx,y+130,label,15,"#e6edf3",anchor="middle")]
-    p += [text(x+25,y+174,"Estrellas y forks de repositorios originales públicos",13,"#8b949e")]
+def activity_days(data):
+    return [day for week in data.get("contributions",{}).get("weeks",[]) for day in week["contributionDays"]]
+
+
+def calendar_card(data,x,y,width):
+    cal=data.get("contributions",{"totalContributions":0,"weeks":[]})
+    p=[panel(x,y,width,280),text(x+24,y+34,"CONTRIBUCIONES",16,"#8b949e",600),text(x+24,y+74,f"{cal['totalContributions']} en los últimos 12 meses",23,weight=600)]
+    weeks=cal["weeks"]
+    step=(width-48)/max(len(weeks),1)
+    size=min(step-2,16)
+    shades={"NONE":"#21262d","FIRST_QUARTILE":"#16345b","SECOND_QUARTILE":"#225b9d","THIRD_QUARTILE":"#388bfd","FOURTH_QUARTILE":"#79c0ff"}
+    last_month=None
+    months=["Ene","Feb","Mar","Abr","May","Jun","Jul","Ago","Sep","Oct","Nov","Dic"]
+    for i,week in enumerate(weeks):
+        for day in week["contributionDays"]:
+            dx=x+24+i*step
+            dy=y+119+day["weekday"]*18
+            if day["date"][8:]=="01" and i<len(weeks)-2:
+                month=int(day["date"][5:7])
+                if month != last_month:
+                    p += [text(dx,y+108,months[month-1],12,"#8b949e")]
+                    last_month=month
+            title=escape(f"{day['date']}: {day['contributionCount']} contribuciones")
+            p += [f'<rect x="{dx:.2f}" y="{dy}" width="{size:.2f}" height="{size:.2f}" rx="2" fill="{shades[day["contributionLevel"]]}"><title>{title}</title></rect>']
+    p += [text(x+24,y+259,"Actividad registrada por GitHub",13,"#8b949e"),text(x+width-152,y+259,"Menos",12,"#8b949e")]
+    for i,color in enumerate(shades.values()):
+        p += [f'<rect x="{x+width-111+i*14}" y="{y+249}" width="11" height="11" rx="2" fill="{color}"/>']
+    p += [text(x+width-34,y+259,"Más",12,"#8b949e")]
+    return "".join(p)
+
+
+def activity_card(data,x,y,width):
+    days=activity_days(data)
+    active=sum(day["contributionCount"]>0 for day in days)
+    p=[panel(x,y,width,280),text(x+24,y+34,"ACTIVIDAD Y COMUNIDAD",16,"#8b949e",600),donut(x+103,y+142,58,[("Activos",active),("Sin actividad",len(days)-active)],active,"días activos")]
+    for i,(key,label) in enumerate([("stars","Estrellas"),("forks","Forks"),("followers","Seguidores"),("following","Siguiendo")]):
+        p += [text(x+193,y+88+i*38,f"{data[key]}  {label}",18)]
+    p += [text(x+24,y+259,"Días activos en los últimos 12 meses",13,"#8b949e")]
     return "".join(p)
 
 
 def render(data,mobile=False):
-    width,height=(480,1170) if mobile else (950,664)
-    p=[f'<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}" viewBox="0 0 {width} {height}" role="img" aria-labelledby="title desc">', '<title id="title">Benja Guerra · GitHub dashboard</title>',f'<desc id="desc">{data["public_repos"]} repositorios públicos, {data["stars"]} estrellas, {data["forks"]} forks recibidos y {data["followers"]} seguidores. Actualizado {escape(data["updated_at"])}.</desc>', '<g font-family="Segoe UI,Arial,sans-serif">',f'<rect width="{width}" height="{height}" rx="26" fill="#0d1117"/>']
+    width,height=(480,1220) if mobile else (1280,632)
+    p=[f'<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}" viewBox="0 0 {width} {height}" role="img" aria-labelledby="title desc">','<title id="title">Benja Guerra · GitHub dashboard</title>',f'<desc id="desc">Lenguajes, repositorios, contribuciones y comunidad. Actualizado {escape(data["updated_at"])}.</desc>','<g font-family="Segoe UI,Arial,sans-serif">',f'<rect width="{width}" height="{height}" rx="24" fill="#0d1117"/>']
     if mobile:
-        p += [languages_card(data,20,20,440),repos_card(data,20,438,440),panel(20,856,440,294),text(45,894,"EN NÚMEROS",18,"#8b949e",600)]
-        for i,(key,label) in enumerate([("stars","Estrellas"),("forks","Forks recibidos"),("followers","Seguidores"),("following","Siguiendo")]):
-            cx=130+(i%2)*220
-            cy=946+(i//2)*94
-            p += [text(cx,cy,data[key],37,"#58a6ff",700,"middle"),text(cx,cy+30,label,19,anchor="middle")]
-        p += [text(45,1125,"Estrellas y forks: originales públicos",16,"#8b949e")]
+        p += [languages_card(data,20,20,440),repos_card(data,20,320,440),calendar_card(data,20,620,440),activity_card(data,20,920,440)]
     else:
-        p += [languages_card(data,24,24,443),repos_card(data,483,24,443),counters(data,24,442,902)]
-    p += ['</g></svg>']
-    return "".join(p)
+        p += [languages_card(data,24,24,608),repos_card(data,648,24,608),calendar_card(data,24,328,800),activity_card(data,840,328,416)]
+    return "".join(p)+"</g></svg>"
+
 
 
 def main():
     data=collect()
+    data['contributions']=contributions()
     # Generate only after every API call succeeds, keeping the last good dashboard on failure.
     assets=ROOT/"assets"
     assets.mkdir(exist_ok=True)

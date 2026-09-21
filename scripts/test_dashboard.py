@@ -2,10 +2,24 @@ import unittest
 import xml.etree.ElementTree as ET
 from unittest.mock import patch
 
-from update_dashboard import collect, language_values, render
+from update_dashboard import collect, language_values, render, calendar_card, activity_days
 
 
 class DashboardTests(unittest.TestCase):
+    def test_contribution_cells_preserve_dates_counts_and_weekdays(self):
+        data = {"contributions": {"totalContributions": 3, "weeks": [{"contributionDays": [
+            {"date":"2026-09-20", "weekday":0, "contributionCount":0, "contributionLevel":"NONE"},
+            {"date":"2026-09-21", "weekday":1, "contributionCount":3, "contributionLevel":"FOURTH_QUARTILE"}
+        ]}]}}
+        svg = '<svg xmlns="http://www.w3.org/2000/svg">'+calendar_card(data,0,0,800)+'</svg>'
+        root = ET.fromstring(svg)
+        cells = [r for r in root.findall('{http://www.w3.org/2000/svg}rect') if list(r)]
+        self.assertEqual(len(cells), 2)
+        self.assertEqual(cells[0].get('fill'), '#21262d')
+        self.assertEqual(cells[1].get('y'), '137')
+        self.assertIn('2026-09-21: 3 contribuciones', svg)
+        self.assertEqual(sum(d['contributionCount'] > 0 for d in activity_days(data)), 1)
+
     def test_language_grouping_preserves_total(self):
         data = {"languages": {str(i): i for i in range(9, 0, -1)}}
         grouped = language_values(data)
