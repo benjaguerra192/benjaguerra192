@@ -1,6 +1,9 @@
-<p align="center">
-  <img src="assets/banner.svg" width="100%" alt="Benja Guerra. Código que se convierte en experiencias. Web, herramientas y sim racing." />
-</p>
+<picture>
+  <source media="(max-width: 640px)" srcset="assets/dashboard-mobile.svg" />
+  <img src="assets/dashboard.svg" width="100%" alt="Benja Guerra: logo BG, porcentajes de lenguajes, distribución de repositorios públicos y contadores de estrellas, forks y seguidores." />
+</picture>
+
+<sub>Actualización automática cada 30 minutos; puede demorarse por GitHub Actions y la caché. Lenguajes por bytes de código, sin forks ni este perfil. [Datos y fecha](assets/stats.json) · [Actualizar estadísticas](https://github.com/benjaguerra192/benjaguerra192/actions/workflows/profile-dashboard.yml)</sub>
 
 <p align="center">
   <a href="https://github.com/benjaguerra192?tab=repositories"><strong>Explorar proyectos ↗</strong></a>
