@@ -144,20 +144,20 @@ def calendar_card(data,x,y,width):
 def activity_card(data,x,y,width):
     days=activity_days(data)
     active=sum(day["contributionCount"]>0 for day in days)
-    p=[panel(x,y,width,280),text(x+24,y+34,"ACTIVIDAD Y COMUNIDAD",16,"#8b949e",600),donut(x+103,y+142,58,[("Activos",active),("Sin actividad",len(days)-active)],active,"días activos")]
+    p=[panel(x,y,width,280),text(x+24,y+34,"ACTIVIDAD Y COMUNIDAD",16,"#8b949e",600),donut(x+96,y+139,55,[("Activos",active),("Sin actividad",len(days)-active)],active,""),text(x+96,y+228,"días activos",16,"#8b949e",anchor="middle"),f'<path d="M{x+179} {y+66}V{y+228}" stroke="#30363d"/>']
     for i,(key,label) in enumerate([("stars","Estrellas"),("forks","Forks"),("followers","Seguidores"),("following","Siguiendo")]):
-        p += [text(x+193,y+88+i*38,f"{data[key]}  {label}",18)]
+        p += [text(x+199,y+91+i*40,label,17,"#8b949e"),text(x+width-24,y+91+i*40,data[key],21,weight=600,anchor="end")]
     p += [text(x+24,y+259,"Días activos en los últimos 12 meses",13,"#8b949e")]
     return "".join(p)
 
 
 def render(data,mobile=False):
-    width,height=(480,1220) if mobile else (1280,632)
+    width,height=(436,1220) if mobile else (1164,632)
     p=[f'<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}" viewBox="0 0 {width} {height}" role="img" aria-labelledby="title desc">','<title id="title">Benja Guerra · GitHub dashboard</title>',f'<desc id="desc">Lenguajes, repositorios, contribuciones y comunidad. Actualizado {escape(data["updated_at"])}.</desc>','<g font-family="Segoe UI,Arial,sans-serif">',f'<rect width="{width}" height="{height}" rx="24" fill="#0d1117"/>']
     if mobile:
-        p += [languages_card(data,20,20,440),repos_card(data,20,320,440),calendar_card(data,20,620,440),activity_card(data,20,920,440)]
+        p += [languages_card(data,20,20,396),repos_card(data,20,320,396),calendar_card(data,20,620,396),activity_card(data,20,920,396)]
     else:
-        p += [languages_card(data,24,24,608),repos_card(data,648,24,608),calendar_card(data,24,328,800),activity_card(data,840,328,416)]
+        p += [languages_card(data,24,24,550),repos_card(data,590,24,550),calendar_card(data,24,328,654),activity_card(data,694,328,446)]
     return "".join(p)+"</g></svg>"
 
 
