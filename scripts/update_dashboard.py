@@ -127,14 +127,17 @@ def counters(data,x,y,width):
 
 
 def render(data,mobile=False):
-    width,height=(760,1060) if mobile else (1280,738)
+    width,height=(480,1500) if mobile else (1280,738)
     p=[f'<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}" viewBox="0 0 {width} {height}" role="img" aria-labelledby="title desc">', '<title id="title">Benja Guerra · GitHub dashboard</title>',f'<desc id="desc">{data["public_repos"]} repositorios públicos, {data["stars"]} estrellas, {data["forks"]} forks recibidos y {data["followers"]} seguidores. Actualizado {escape(data["updated_at"])}.</desc>', '<g font-family="Segoe UI,Arial,sans-serif">',f'<rect width="{width}" height="{height}" rx="26" fill="#090f19"/>']
     if mobile:
-        p += [identity(20,20,280,306,True),panel(316,20,424,306),text(343,75,"CÓDIGO QUE SE",27,weight=700),text(343,112,"CONVIERTE EN",27,weight=700),text(343,149,"EXPERIENCIAS.",27,"#bafa55",700)]
-        for i,line in enumerate(["WEB / HERRAMIENTAS","SIM RACING"]):
-            p += [text(343,223+i*32,line,17,"#aab9ce")]
-        p += [languages_card(data,20,342,352),repos_card(data,388,342,352),counters(data,20,760,720)]
-        footer=994
+        p += [panel(20,20,440,210), '<circle cx="93" cy="94" r="45" fill="#172b30" stroke="#bafa55" stroke-width="2"/>',text(93,107,"BG",38,"#bafa55",750,"middle"),text(160,88,"Benja Guerra",30,weight=700),text(160,120,"@benjaguerra192",18,"#aab9ce"),text(45,173,"Ideas que se pueden probar.",22),text(45,207,"WEB / HERRAMIENTAS / SIM RACING",15,"#bafa55")]
+        p += [languages_card(data,20,246,440),repos_card(data,20,664,440),panel(20,1082,440,294),text(45,1120,"EN NÚMEROS",18,"#aab9ce",600)]
+        for i,(key,label) in enumerate([("stars","Estrellas"),("forks","Forks recibidos"),("followers","Seguidores"),("following","Siguiendo")]):
+            cx=130+(i%2)*220
+            cy=1172+(i//2)*94
+            p += [text(cx,cy,data[key],37,"#bafa55",700,"middle"),text(cx,cy+30,label,19,anchor="middle")]
+        p += [text(45,1351,"Estrellas y forks: originales públicos",16,"#aab9ce")]
+        footer=1419
     else:
         p += [identity(24,24,314,616),languages_card(data,354,24,443),repos_card(data,813,24,443),counters(data,354,442,902)]
         footer=683
