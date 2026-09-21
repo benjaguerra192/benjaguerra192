@@ -10,7 +10,7 @@ from urllib.request import Request, urlopen
 
 ROOT = Path(__file__).resolve().parents[1]
 USER = "benjaguerra192"
-COLORS = ["#bafa55", "#65d5ff", "#ae9aff", "#ffb66e", "#ff7eb6", "#6985a9"]
+COLORS = ["#58a6ff", "#bc8cff", "#79c0ff", "#d29922", "#f778ba", "#8b949e"]
 
 
 def api(path):
@@ -48,16 +48,16 @@ def collect():
     }
 
 
-def text(x, y, value, size=20, color="#eef4fc", weight=400, anchor="start"):
+def text(x, y, value, size=20, color="#e6edf3", weight=400, anchor="start"):
     return f'<text x="{x}" y="{y}" font-size="{size}" fill="{color}" font-weight="{weight}" text-anchor="{anchor}">{escape(str(value))}</text>'
 
 
 def panel(x, y, width, height):
-    return f'<rect x="{x}" y="{y}" width="{width}" height="{height}" rx="22" fill="#111d2d" stroke="#26354b"/>'
+    return f'<rect x="{x}" y="{y}" width="{width}" height="{height}" rx="22" fill="#161b22" stroke="#30363d"/>'
 
 
 def donut(cx, cy, radius, values, center, subtitle):
-    parts = [f'<circle cx="{cx}" cy="{cy}" r="{radius}" fill="none" stroke="#243246" stroke-width="25"/>']
+    parts = [f'<circle cx="{cx}" cy="{cy}" r="{radius}" fill="none" stroke="#30363d" stroke-width="25"/>']
     total = sum(value for _, value in values)
     circumference = 2 * math.pi * radius
     offset = 0
@@ -66,7 +66,7 @@ def donut(cx, cy, radius, values, center, subtitle):
             length = value / total * circumference
             parts.append(f'<circle cx="{cx}" cy="{cy}" r="{radius}" fill="none" stroke="{COLORS[index % len(COLORS)]}" stroke-width="25" stroke-dasharray="{length:.4f} {circumference - length:.4f}" stroke-dashoffset="{-offset:.4f}" transform="rotate(-90 {cx} {cy})"/>')
             offset += length
-    parts += [text(cx, cy + 6, center, 37, weight=700, anchor="middle"), text(cx, cy + 35, subtitle, 15, "#aab9ce", anchor="middle")]
+    parts += [text(cx, cy + 6, center, 37, weight=700, anchor="middle"), text(cx, cy + 35, subtitle, 15, "#8b949e", anchor="middle")]
     return "".join(parts)
 
 
@@ -77,71 +77,53 @@ def language_values(data):
     return items
 
 
-def identity(x, y, width, height, mobile=False):
-    p = [panel(x, y, width, height)]
-    cx = x + width / 2
-    p += [text(x + 26, y + 38, "DEVELOPER / MAKER", 15, "#bafa55", 600)]
-    p += [f'<circle cx="{cx}" cy="{y+137}" r="66" fill="#172b30" stroke="#bafa55" stroke-width="2"/>', text(cx, y+155, "BG", 53, "#bafa55", 750, "middle")]
-    p += [text(cx, y+245, "Benja Guerra", 29, weight=700, anchor="middle"), text(cx, y+277, "@benjaguerra192", 17, "#aab9ce", anchor="middle")]
-    if not mobile:
-        p += [f'<path d="M{x+26} {y+309}H{x+width-26}" stroke="#2b3a4f"/>']
-        for i, line in enumerate(["Ideas que se pueden", "abrir, probar y usar."]):
-            p += [text(x+26, y+355+i*29, line, 21)]
-        for i, line in enumerate(["01  EXPERIENCIAS WEB", "02  HERRAMIENTAS", "03  SIM RACING"]):
-            p += [text(x+26, y+469+i*43, line, 15, "#bafa55" if i==0 else "#aab9ce", 600)]
-    return "".join(p)
-
-
 def languages_card(data, x, y, width):
     values = language_values(data)
     total = sum(value for _, value in values)
     top_percent = f"{values[0][1]/total:.0%}" if total else "—"
-    p = [panel(x,y,width,402), text(x+25,y+36,"LENGUAJES",16,"#aab9ce",600)]
+    p = [panel(x,y,width,402), text(x+25,y+36,"LENGUAJES",16,"#8b949e",600)]
     p += [donut(x+width/2,y+154,76,values,top_percent,values[0][0] if values else "Sin código")]
     for i,(name,value) in enumerate(values):
         lx = x+25+(i%2)*(width/2-8)
         ly = y+277+(i//2)*32
         p += [f'<circle cx="{lx+4}" cy="{ly-5}" r="4" fill="{COLORS[i]}"/>',text(lx+16,ly,f"{name} {value/total:.1%}",15)]
-    p += [text(x+25,y+378,"Por bytes · sin forks ni perfil",13,"#aab9ce")]
+    p += [text(x+25,y+378,"Por bytes · sin forks ni perfil",13,"#8b949e")]
     return "".join(p)
 
 
 def repos_card(data,x,y,width):
     values=[("Originales",data["original_repos"]),("Forks",data["forked_repos"])]
-    p=[panel(x,y,width,402),text(x+25,y+36,"REPOSITORIOS",16,"#aab9ce",600),donut(x+width/2,y+154,76,values,data["public_repos"],"públicos")]
+    p=[panel(x,y,width,402),text(x+25,y+36,"REPOSITORIOS",16,"#8b949e",600),donut(x+width/2,y+154,76,values,data["public_repos"],"públicos")]
     for i,(name,value) in enumerate(values):
         ly=y+281+i*35
         p += [f'<circle cx="{x+29}" cy="{ly-5}" r="5" fill="{COLORS[i]}"/>',text(x+45,ly,name,18),text(x+width-28,ly,value,20,weight=700,anchor="end")]
-    p += [text(x+25,y+378,"Incluye este repositorio de perfil",13,"#aab9ce")]
+    p += [text(x+25,y+378,"Incluye este repositorio de perfil",13,"#8b949e")]
     return "".join(p)
 
 
 def counters(data,x,y,width):
-    p=[panel(x,y,width,198),text(x+25,y+37,"EN NÚMEROS",16,"#aab9ce",600)]
+    p=[panel(x,y,width,198),text(x+25,y+37,"EN NÚMEROS",16,"#8b949e",600)]
     columns=[("stars","Estrellas"),("forks","Forks recibidos"),("followers","Seguidores"),("following","Siguiendo")]
     for i,(key,label) in enumerate(columns):
         cx=x+width*(i+.5)/4
-        p += [text(cx,y+98,data[key],39,"#bafa55",700,"middle"),text(cx,y+130,label,15,"#eef4fc",anchor="middle")]
-    p += [text(x+25,y+174,"Estrellas y forks de repositorios originales públicos",13,"#aab9ce")]
+        p += [text(cx,y+98,data[key],39,"#58a6ff",700,"middle"),text(cx,y+130,label,15,"#e6edf3",anchor="middle")]
+    p += [text(x+25,y+174,"Estrellas y forks de repositorios originales públicos",13,"#8b949e")]
     return "".join(p)
 
 
 def render(data,mobile=False):
-    width,height=(480,1500) if mobile else (1280,738)
-    p=[f'<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}" viewBox="0 0 {width} {height}" role="img" aria-labelledby="title desc">', '<title id="title">Benja Guerra · GitHub dashboard</title>',f'<desc id="desc">{data["public_repos"]} repositorios públicos, {data["stars"]} estrellas, {data["forks"]} forks recibidos y {data["followers"]} seguidores. Actualizado {escape(data["updated_at"])}.</desc>', '<g font-family="Segoe UI,Arial,sans-serif">',f'<rect width="{width}" height="{height}" rx="26" fill="#090f19"/>']
+    width,height=(480,1170) if mobile else (950,664)
+    p=[f'<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}" viewBox="0 0 {width} {height}" role="img" aria-labelledby="title desc">', '<title id="title">Benja Guerra · GitHub dashboard</title>',f'<desc id="desc">{data["public_repos"]} repositorios públicos, {data["stars"]} estrellas, {data["forks"]} forks recibidos y {data["followers"]} seguidores. Actualizado {escape(data["updated_at"])}.</desc>', '<g font-family="Segoe UI,Arial,sans-serif">',f'<rect width="{width}" height="{height}" rx="26" fill="#0d1117"/>']
     if mobile:
-        p += [panel(20,20,440,210), '<circle cx="93" cy="94" r="45" fill="#172b30" stroke="#bafa55" stroke-width="2"/>',text(93,107,"BG",38,"#bafa55",750,"middle"),text(160,88,"Benja Guerra",30,weight=700),text(160,120,"@benjaguerra192",18,"#aab9ce"),text(45,173,"Ideas que se pueden probar.",22),text(45,207,"WEB / HERRAMIENTAS / SIM RACING",15,"#bafa55")]
-        p += [languages_card(data,20,246,440),repos_card(data,20,664,440),panel(20,1082,440,294),text(45,1120,"EN NÚMEROS",18,"#aab9ce",600)]
+        p += [languages_card(data,20,20,440),repos_card(data,20,438,440),panel(20,856,440,294),text(45,894,"EN NÚMEROS",18,"#8b949e",600)]
         for i,(key,label) in enumerate([("stars","Estrellas"),("forks","Forks recibidos"),("followers","Seguidores"),("following","Siguiendo")]):
             cx=130+(i%2)*220
-            cy=1172+(i//2)*94
-            p += [text(cx,cy,data[key],37,"#bafa55",700,"middle"),text(cx,cy+30,label,19,anchor="middle")]
-        p += [text(45,1351,"Estrellas y forks: originales públicos",16,"#aab9ce")]
-        footer=1419
+            cy=946+(i//2)*94
+            p += [text(cx,cy,data[key],37,"#58a6ff",700,"middle"),text(cx,cy+30,label,19,anchor="middle")]
+        p += [text(45,1125,"Estrellas y forks: originales públicos",16,"#8b949e")]
     else:
-        p += [identity(24,24,314,616),languages_card(data,354,24,443),repos_card(data,813,24,443),counters(data,354,442,902)]
-        footer=683
-    p += [text(28,footer,"ACTUALIZACIÓN AUTOMÁTICA · CADA 30 MIN",15,"#bafa55",600),text(28,footer+27,"Datos públicos · "+data["updated_at"],14,"#aab9ce"),'</g></svg>']
+        p += [languages_card(data,24,24,443),repos_card(data,483,24,443),counters(data,24,442,902)]
+    p += ['</g></svg>']
     return "".join(p)
 
 
